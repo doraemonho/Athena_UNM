@@ -1,49 +1,48 @@
 <comment>
 problem   = Simulation with Turbulence, not production H-H2 chem. network 
 reference = 
-configure = 
-python3 configure.py --prob=chem_H2_MHD --chemistry=H2_MHD --cvode_path=/home/doraho/local/cvode/ --lib_path=/home/doraho/local/cvode/ -fft -mpi -b -hdf5
+configure =  python3 configure.py --prob=chem_H2_MHD --chemistry=H2_MHD -fft -mpi -b  --cvode_path=/home/doraho/local/cvode/ --lib_path=/home/doraho/local/cvode/
 
 <job>
-problem_id = WeakB_792   # problem ID: basename of output filenames
+problem_id = WeakB_1024  # problem ID: basename of output filenames
 
 <output1>
 file_type  = hst         # History data dump
 dt         = 0.001       # time increment between outputs
 
 <output2>
-file_type  = vtk         # Binary data dump
+file_type  = hdf5        # Binary data dump
 variable   = prim        # variables to be output
-dt         = 2           # time increment between outputs
+dt         = 5           # time increment between outputs
 
 <output3>
 file_type  = rst         # History data dump
-dt         = 5           # time increment between outputs
+dt         = 10          # time increment between outputs
 
 <time>
 cfl_number = 0.3        # The Courant, Friedrichs, & Lewy (CFL) Number
-nlim       = 100000     # cycle limit
+nlim       = 1000000    # cycle limit
 tlim       = 100.0      # time limit
 integrator  = vl2       # time integration algorithm
 xorder      = 2         # order of spatial reconstruction
 ncycle_out  = 1         # interval for stdout summary info
 
 <mesh>
-nx1        = 128        # Number of zones in X1-direction
-x1min      = -25.0      # minimum value of X1
-x1max      = 25.0       # maximum value of X1 (unit: pc)
+nx1        = 1024       # Number of zones in X1-direction
+x1min      = -100.0     # minimum value of X1
+x1max      = 100.0      # maximum value of X1 (unit: pc)
 ix1_bc     = periodic   # inner-X1 boundary flag
 ox1_bc     = periodic   # outer-X1 boundary flag
 
-nx2        = 128        # Number of zones in X2-direction
-x2min      = -25.0      # minimum value of X2
-x2max      = 25.0       # maximum value of X2 (unit: pc)
+nx2        = 1024       # Number of zones in X2-direction
+x2min      = -100.0     # minimum value of X2
+x2max      = 100.0      # maximum value of X2 (unit: pc)
 ix2_bc     = periodic   # inner-X2 boundary flag
 ox2_bc     = periodic   # outer-X2 boundary flag
 
-nx3        = 128        # Number of zones in X3-direction
-x3min      = -25.0      # minimum value of X3
-x3max      = 25.0       # maximum value of X3 (unit: pc)
+nx3        = 1024       # Number of zones in X3-direction
+x3min      = -100.0     # minimum value of X3
+x3max      = 100.0      # maximum value of X3 (unit: pc)
 ix3_bc     = periodic   # inner-X3 boundary flag
 ox3_bc     = periodic   # outer-X3 boundary flag
 
@@ -54,7 +53,7 @@ nx3        = 64
 
 <hydro>
 gamma           = 1.666666666667 # gamma = C_p/C_v
-iso_sound_speed = 3.66           # equavalent to sqrt(gamma*p/d) for p=0.1, d=1 (From examples) (unit: km s^-1)
+iso_sound_speed = 2.66           # equavalent to sqrt(gamma*p/d) for p=0.1, d=1 (From examples) (unit: km s^-1)
 
 <problem>
 turb_flag  = 3        # 2  )1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
@@ -66,9 +65,8 @@ s_init_H   = 1;       # H+ aboundance per H
 s_init_H2  = 0;       # H+ aboundance per H
 
 
-
 <turbulence>
-dedt       = 8e4      # 200 )Energy injection rate (for driven) or Total energy (for decaying)
+dedt       = 8e6      # 200 )Energy injection rate (for driven) or Total energy (for decaying)
 nlow       = 0        # cut-off wavenumber at low-k
 nhigh      = 12       # cut-off wavenumber at high-k
 expo       = 2.0      # power-law exponent
@@ -79,8 +77,8 @@ f_shear    = 1        # the ratio of the shear component, 0->fully compressive, 
 
 <chemistry>
 #chemistry solver parameters
-reltol     = 1.0e-8     #relative tolerance, default 1.0e-2
-abstol     = 1.0e-20    #absolute tolerance, default 1.0e-12
+reltol     = 1.0e-5     #relative tolerance, default 1.0e-2
+abstol     = 1.0e-12    #absolute tolerance, default 1.0e-12
 #abstol_H2   = 1.0e-10   #set absolute tolerance to a certain species
 user_jac   = 0          #flag for whether use user provided Jacobian. default false/0
 maxsteps   = 100000     #maximum number of steps in one integration. default 10000
