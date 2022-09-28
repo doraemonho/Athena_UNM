@@ -22,9 +22,14 @@
 #include "../../scalars/scalars.hpp"
 #include "../../bvals/bvals.hpp"
 #include "../../utils/units.hpp"
+#ifdef INCLUDE_CHEMISTRY
+#include "../../chemistry/utils/shielding.hpp"
+#include "../../chemistry/utils/thermo.hpp"
+#endif
 
 namespace {
-  Real rad_G0; //diffuse radiation field strength in Draine 1987 unit
+  AthenaArray<Real> G0_iang; //diffuse radiation field strength in Draine 1987 unit
+  Real G0, cr_rate; //cosmic ray ionisation rate
   Real f_cell, f_prev; //fraction of the column in the cell that goes to shielding
 #ifdef INCLUDE_CHEMISTRY
   Real lunit; //length unit in cm
@@ -36,8 +41,17 @@ namespace {
 RadIntegrator::RadIntegrator(Radiation *prad, ParameterInput *pin) {
   pmy_mb = prad->pmy_block;
   pmy_rad = prad;
-  rad_G0 = pin->GetReal("radiation", "G0");
+  G0 = pin->GetOrAddReal("radiation", "G0", 0.);
+  G0_iang.NewAthenaArray(6);
+  G0_iang(BoundaryFace::inner_x1) = pin->GetOrAddReal("radiation", "G0_inner_x1", G0);
+  G0_iang(BoundaryFace::inner_x2) = pin->GetOrAddReal("radiation", "G0_inner_x2", G0);
+  G0_iang(BoundaryFace::inner_x3) = pin->GetOrAddReal("radiation", "G0_inner_x3", G0);
+  G0_iang(BoundaryFace::outer_x1) = pin->GetOrAddReal("radiation", "G0_outer_x1", G0);
+  G0_iang(BoundaryFace::outer_x2) = pin->GetOrAddReal("radiation", "G0_outer_x2", G0);
+  G0_iang(BoundaryFace::outer_x3) = pin->GetOrAddReal("radiation", "G0_outer_x3", G0);
+  cr_rate = pin->GetOrAddReal("radiation", "CR", 2e-16);
   f_cell = pin->GetOrAddReal("radiation", "shielding_fraction_cell", 0.5);
+  f_prev = 1. - f_cell;
   std::stringstream msg; //error message
   if (pmy_rad->nang != 6) {
     msg << "### FATAL ERROR in RadIntegrator constructor [RadIntegrator]" << std::endl
@@ -49,10 +63,10 @@ RadIntegrator::RadIntegrator(Radiation *prad, ParameterInput *pin) {
   lunit = pmy_chemnet->punit->Length;
   ncol = pmy_chemnet->n_cols_;
   //allocate array for column density
-  int ncells1 = pmy_mb->block_size.nx1 + 2; //one ghost cell on each side
+  int ncells1 = pmy_mb->block_size.nx1 + 2*(NGHOST);
   int ncells2 = 1, ncells3 = 1;
-  if (pmy_mb->block_size.nx2 > 1) ncells2 = pmy_mb->block_size.nx2 + 2;
-  if (pmy_mb->block_size.nx3 > 1) ncells3 = pmy_mb->block_size.nx3 + 2;
+  if (pmy_mb->block_size.nx2 > 1) ncells2 = pmy_mb->block_size.nx2 + 2*(NGHOST);
+  if (pmy_mb->block_size.nx3 > 1) ncells3 = pmy_mb->block_size.nx3 + 2*(NGHOST);
   col.NewAthenaArray(6, ncells3, ncells2, ncells1, ncol);
 #ifdef DEBUG
   col_avg.NewAthenaArray(ncol, ncells3, ncells2, ncells1);
@@ -66,18 +80,7 @@ RadIntegrator::RadIntegrator(Radiation *prad, ParameterInput *pin) {
 
 //----------------------------------------------------------------------------------------
 //! destructor
-RadIntegrator::~RadIntegrator() {
-#ifdef INCLUDE_CHEMISTRY
-  col.DeleteAthenaArray();
-#ifdef DEBUG
-  col_avg.DeleteAthenaArray();
-  col_Htot.DeleteAthenaArray();
-  col_H2.DeleteAthenaArray();
-  col_CO.DeleteAthenaArray();
-  col_C.DeleteAthenaArray();
-#endif //DEBUG
-#endif //INCLUDE_CHEMISTRY
-}
+RadIntegrator::~RadIntegrator() {}
 
 //----------------------------------------------------------------------------------------
 //! \fn void RadIntegrator::CopyToOutput()
@@ -97,6 +100,7 @@ void RadIntegrator::CopyToOutput() {
       for (int i=is-NGHOST; i<=ie+NGHOST; ++i) {
         for (int iang=0; iang < 6; iang++) {
           //column densities
+#ifdef INCLUDE_CHEMISTRY
 #ifdef DEBUG
           col_Htot(iang, k, j, i) = col(iang_arr[iang], k, j, i, pmy_chemnet->iNHtot_);
           col_H2(iang, k, j, i) = col(iang_arr[iang], k, j, i, pmy_chemnet->iNH2_);
@@ -110,6 +114,7 @@ void RadIntegrator::CopyToOutput() {
             col_avg(icol, k, j, i) += col(iang, k, j, i, icol)/6.;
           }
 #endif //DEBUG
+#endif //INCLUDE_CHEMISTRY
           //radiation
           for (int ifreq=0; ifreq < pmy_rad->nfreq; ++ifreq) {
             if (iang == 0) {
@@ -128,14 +133,68 @@ void RadIntegrator::CopyToOutput() {
 //----------------------------------------------------------------------------------------
 //! \fn void RadIntegrator::UpdateRadiation(int direction)
 //! \brief calcuate total column and update radiation
-void RadIntegrator::UpdateRadiation(int direction) {}
+void RadIntegrator::UpdateRadiation(int direction) {
+#ifdef INCLUDE_CHEMISTRY
+  const int iang = direction;
+  const Real Zd = pmy_chemnet->zdg_;
+  const Real bH2 = 3.0e5; //H2 velocity dispersion
+  const int iph_H2 = ChemNetwork::iph_H2_;
+  const int iph_CO = ChemNetwork::iph_CO_;
+  const int iph_C = ChemNetwork::iph_C_;
+  const int iPE = pmy_chemnet->index_gpe_;
+  const int iCR = pmy_chemnet->index_cr_;
+  const Real sigmaPE = Thermo::sigmaPE_;
+  const Real NH0_CR = 9.35e20;
+  Real NH, AV, NCO, NC, NH2, fs_CO, fs_H2, fs_CI;
+  for (int k=pmy_mb->ks; k<=pmy_mb->ke; ++k) {
+    for (int j=pmy_mb->js; j<=pmy_mb->je; ++j) {
+      for (int i=pmy_mb->is; i<=pmy_mb->ie; ++i) {
+        NH = col(direction, k, j, i, pmy_chemnet->iNHtot_);
+        NH2 = col(direction, k, j, i,  pmy_chemnet->iNH2_);
+        NCO = col(direction, k, j, i,  pmy_chemnet->iNCO_);
+        NC = col(direction, k, j, i,  pmy_chemnet->iNC_);
+        AV = NH * Zd / 1.87e21;
+        //photo-reactions
+        for (int ifreq=0; ifreq < pmy_rad->nfreq-2; ++ifreq) {
+          pmy_rad->ir(k, j, i, ifreq * pmy_rad->nang+iang) = G0_iang(iang)
+            * exp( -ChemNetwork::kph_avfac_[ifreq] * AV );
+        }
+        //H2, CO and CI self-shielding
+        fs_CO = Shielding::fShield_CO_V09(NCO, NH2);
+        fs_H2 = Shielding::fShield_H2(NH2, bH2);
+        fs_CI = Shielding::fShield_C(NC, NH2);
+        pmy_rad->ir(k, j, i, iph_H2 * pmy_rad->nang+iang) *=
+          fs_H2;
+        pmy_rad->ir(k, j, i, iph_CO * pmy_rad->nang+iang) *=
+          fs_CO;
+        pmy_rad->ir(k, j, i, iph_C * pmy_rad->nang+iang) *=
+          fs_CI;
+        //GPE
+        pmy_rad->ir(k, j, i, iPE * pmy_rad->nang+iang) = G0_iang(iang)
+          *  exp(-NH * sigmaPE * Zd);
+        //CR
+        if (pmy_chemnet->is_cr_shielding_) {
+          if (NH <= NH0_CR) {
+            pmy_rad->ir(k, j, i, iCR * pmy_rad->nang+iang)
+              = cr_rate;
+          } else {
+            pmy_rad->ir(k, j, i, iCR * pmy_rad->nang+iang)
+              = cr_rate * (NH0_CR/NH);
+          }
+        }
+      }
+    }
+  }
+#endif //INCLUDE_CHEMISTRY
+  return;
+}
 
 #ifdef INCLUDE_CHEMISTRY
 //----------------------------------------------------------------------------------------
 //! \fn void void GetColMB(int direction)
 //! \brief calculate column densities within the meshblock
 //!
-//! direction: 0:+x, 1:+y, 2:+z, 3:-x, 4:-y, 5:-z
+//! direction: 0:+x, 1:-x, 2:+y, 3:-y, 4:+y, 5:-z (bvals/bvals_interfaces.hpp)
 void RadIntegrator::GetColMB(int direction) {
   const int iH2 = pmy_chemnet->iH2_;
   const int iCO = pmy_chemnet->iCO_;

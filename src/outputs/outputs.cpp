@@ -621,6 +621,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
         AppendOutputDataNode(pod);
         num_vars_++;
       }
+#ifdef INCLUDE_CHEMISTRY
 #ifdef DEBUG
       //for testing six-ray. Not implemented in HDF5 output yet
       if (RADIATION_INTEGRATOR == "six_ray") {
@@ -686,6 +687,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
         num_vars_++;
       }
 #endif //DEBUG
+#endif //INCLUDE_CHEMISTRY
     }
   }
 
@@ -771,14 +773,17 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     }
   } // endif (MAGNETIC_FIELDS_ENABLED)
 
+  bool output_all_uov = ContainVariable(output_params.variable, "uov")
+                        || ContainVariable(output_params.variable, "user_out_var");
   for (int n = 0; n < pmb->nuser_out_var; ++n) {
     char abbr_name[16], full_name[32];
     std::snprintf(abbr_name, sizeof(abbr_name), "uov%d", n);
     std::snprintf(full_name, sizeof(full_name), "user_out_var%d", n);
-    if ((pmb->user_out_var_names_[n].length() != 0
+    if (output_all_uov ||
+        (pmb->user_out_var_names_[n].length() != 0
          && ContainVariable(output_params.variable, pmb->user_out_var_names_[n]))
         || ContainVariable(output_params.variable, abbr_name)
-        || ContainVariable(output_params.variable, abbr_name)) {
+        || ContainVariable(output_params.variable, full_name)) {
       pod = new OutputData;
       pod->type = "SCALARS";
       if (pmb->user_out_var_names_[n].length() != 0) {

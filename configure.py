@@ -195,14 +195,15 @@ parser.add_argument('--fftw_path',
 # --chemistry argument
 parser.add_argument('--chemistry',
                     default=None,
-                    choices=["gow17", "H2", "H2_MHD" ,"kida", "C12Mg24"],
+                    choices=["gow17", "H2", "kida","H2_MHD"],
                     help='select chemical network')
 
 # --kida_rates argument
 parser.add_argument('--kida_rates',
                     default=None,
-                    choices=["gow17", "nitrogen", "nitrogen_gas_Sipila"],
+                    choices=["H2", "gow17", "nitrogen", "nitrogen_gas_Sipila"],
                     help='select special rates for kida network')
+
 # -radiation argument
 parser.add_argument('--radiation',
                     default=None,
@@ -617,8 +618,6 @@ if args['chemistry'] is not None:
     elif args['chemistry'] == "H2":
         definitions['NUMBER_PASSIVE_SCALARS'] = '2'
     elif args['chemistry'] == "C12Mg24":
-        definitions['NUMBER_PASSIVE_SCALARS'] = '2'
-    elif args['chemistry'] == "H2_MHD":
         definitions['NUMBER_PASSIVE_SCALARS'] = '2'
 else:
     definitions['CHEMISTRY_OPTION'] = 'NOT_INCLUDE_CHEMISTRY'

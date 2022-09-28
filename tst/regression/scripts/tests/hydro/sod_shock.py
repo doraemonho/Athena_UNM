@@ -15,9 +15,9 @@ sys.path.insert(0, '../../vis/python')
 import athena_read                             # noqa
 athena_read.check_nan_flag = True
 logger = logging.getLogger('athena' + __name__[7:])  # set logger name based on module
-_fluxes = ['hllc']
+_fluxes = ['hlle', 'hllc', 'roe']
 _xdirs = [1, 2, 3]
-_nxs = [2048]  # resolutions to test (ascending)
+_nxs = [128, 256]  # resolutions to test (ascending)
 _exec = os.path.join('bin', 'athena')
 
 

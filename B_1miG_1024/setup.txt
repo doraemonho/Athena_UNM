@@ -1,0 +1,18 @@
+python configure.py --prob=chem_H2_MHD --chemistry=H2_MHD --cvode_path=/global/homes/k/kyuen2/cvode/cvode/ --lib_path=/global/homes/k/kyuen2/cvode/cvode/lib64/ --nscalars=2 -fft -mpi -hdf5 -b --cxx cray
+ 
+module load cray-fftw
+module load cray-hdf5-parallel
+
+cd /global/cscratch1/sd/kyuen2/AthenaMP/B_3miG/
+srun -N 64 -n 2048 --cpu_bind=cores /global/homes/k/kyuen2/athena-chemistry_scalar/bin/athena -i /global/homes/k/kyuen2/athena-chemistry_scalar/B_1miG_792/athinput.H2MHD_R
+srun -N 64 -n 2048 --cpu_bind=cores /global/homes/k/kyuen2/athena-chemistry_scalar/bin/athena -r MP_MHD_800.00012.rst
+ 
+
+#H2_MHD.final.rst 
+
+cd /global/cscratch1/sd/kyuen2/AthenaMP/B_1miG_800/
+srun -N 64 -n 2048 --cpu_bind=cores /global/homes/k/kyuen2/athena-chemistry_scalar/bin/athena -i /global/homes/k/kyuen2/athena-chemistry_scalar/B_1miG_800/athinput.H2MHD_R
+
+
+cd /global/cscratch1/sd/kyuen2/AthenaMP/B_3miG_R/
+srun -N 64 -n 4352 --cpu_bind=cores /global/homes/k/kyuen2/athena-chemistry_scalar_knl/bin/athena -i /global/homes/k/kyuen2/athena-chemistry_scalar_knl/B_1miG_800/athinput.H2MHD_R

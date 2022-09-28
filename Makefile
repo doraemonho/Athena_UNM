@@ -5,10 +5,10 @@
 
 PROBLEM_FILE = chem_H2_MHD.cpp
 COORDINATES_FILE = cartesian.cpp
-EOS_FILE = adiabatic_hydro.cpp
+EOS_FILE = adiabatic_mhd.cpp
 GENERAL_EOS_FILE = noop.cpp
-RSOLVER_FILE = hllc.cpp
-RSOLVER_DIR = hydro/
+RSOLVER_FILE = hlld.cpp
+RSOLVER_DIR = mhd/
 MPIFFT_FILE =  $(wildcard src/fft/plimpton/*.cpp)
 CHEMNET_FILE = src/chemistry/network/H2_MHD.cpp
 CHEMISTRY_FILE = src/chemistry/*.cpp src/chemistry/utils/*.cpp
@@ -16,11 +16,11 @@ RADIATION_FILE = const.cpp
 
 # General compiler specifications
 
-CXX := mpicxx
-CPPFLAGS := -I/home/doraho/local/cvode//include
-CXXFLAGS := -O3 -std=c++11
-LDFLAGS := -L/home/doraho/local/cvode//lib -Wl,-rpath,/home/doraho/local/cvode//lib -L/home/doraho/local/cvode/
-LDLIBS :=  -lsundials_cvode -lsundials_nvecserial -lfftw3
+CXX := CC
+CPPFLAGS := -I/global/homes/k/kyuen2/cvode/cvode//include
+CXXFLAGS := -O3 -h std=c++11 -h aggress -h vector3 -hfp3 -h mpi1 -hnoomp
+LDFLAGS := -hwp -hpl=obj/lib-L/global/homes/k/kyuen2/cvode/cvode/lib64 -Wl,-rpath,/global/homes/k/kyuen2/cvode/cvode/lib64 -L/global/homes/k/kyuen2/cvode/cvode/lib64/
+LDLIBS := -lm -lsundials_cvode -lsundials_nvecserial -lfftw3 -lhdf5
 GCOV_CMD := gcov
 
 # Preliminary definitions
