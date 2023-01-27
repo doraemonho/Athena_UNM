@@ -1,0 +1,4 @@
+module load cray-hdf5-parallel/1.12.2.1
+module load cray-fftw/3.3.10.2
+
+srun -N 1 --cpus-per-task 128 /global/u1/k/kho33/Athena/bin/athena -i athinput.superalf

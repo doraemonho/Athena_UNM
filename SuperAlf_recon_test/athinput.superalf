@@ -1,8 +1,10 @@
 <comment>
 problem   = super alf problem for testing the spectrum in different reconstruction order
 reference = 
-configure = python configure.py --prob=turb_chem -eos=isothermal -fft -mpi -hdf5 -b --nghost = 4
+configure = python configure.py --prob=turb_chem --eos=isothermal -fft -mpi -hdf5 -b --nghost=4 --hdf5_path=/opt/cray/pe/hdf5-parallel/1.12.2.1/gnu/9.1/ --fftw_path=/opt/cray/pe/fftw/3.3.10.2/x86_milan
 
+
+x86_milan/lib
 <job>
 problem_id = superalf  # problem ID: basename of output filenames
 
@@ -37,14 +39,14 @@ ox1_bc     = periodic   # outer-X1 boundary flag
 nx2        = 256        # Number of zones in X2-direction
 x2min      = -5         # minimum value of X2
 x2max      =  5         # maximum value of X2
-ix1_bc     = periodic   # inner-X1 boundary flag
-ox1_bc     = periodic   # outer-X1 boundary flag
+ix2_bc     = periodic   # inner-X3 boundary flag
+ox2_bc     = periodic   # outer-X3 boundary flag
 
 nx3        = 256        # Number of zones in X3-direction
 x3min      = -5         # minimum value of X3
 x3max      =  5         # maximum value of X3
-ix1_bc     = periodic   # inner-X1 boundary flag
-ox1_bc     = periodic   # outer-X1 boundary flag
+ix3_bc     = periodic   # inner-X3 boundary flag
+ox3_bc     = periodic   # outer-X3 boundary flag
 
 <meshblock>
 nx1        =    64
