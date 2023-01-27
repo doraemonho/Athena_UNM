@@ -126,7 +126,7 @@ class BoundaryValues : public BoundaryBase, //public BoundaryPhysics,
   // called before and during time-stepper:
   void StartReceiving(BoundaryCommSubset phase) final {return;};
   void ClearBoundary(BoundaryCommSubset phase) final {return;};
-  void StartReceivingShear(BoundaryCommSubset phase) final;
+  void StartReceivingShear(BoundaryCommSubset phase) final {return;};
   void ComputeShear(const Real time_fc, const Real time_int);
 
   // non-inhertied / unique functions (do not exist in BoundaryVariable objects):
@@ -219,6 +219,7 @@ class BoundaryValues : public BoundaryBase, //public BoundaryPhysics,
   //! \todo (felker):
   //! - consider removing these friendship designations:
   friend class CellCenteredBoundaryVariable;
+  friend class SixRayBoundaryVariable;
   friend class HydroBoundaryVariable;  // needed for shearing box quantities
 };
 #endif // BVALS_BVALS_HPP_

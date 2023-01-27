@@ -16,7 +16,12 @@
 
 //----------------------------------------------------------------------------------------
 //! constructor, for constant radiation integrator
-RadIntegrator::RadIntegrator(Radiation *prad, ParameterInput *pin) {
+RadIntegrator::RadIntegrator(Radiation *prad, ParameterInput *pin)
+#ifdef INCLUDE_CHEMISTRY
+    : col(0, 0, 0, 0),
+    col_bvar(prad->pmy_block, &col)
+#endif //INCLUDE_CHEMISTRY
+{
   pmy_mb = prad->pmy_block;
   pmy_rad = prad;
 }
@@ -49,13 +54,11 @@ void RadIntegrator::CopyToOutput() {
 }
 
 //----------------------------------------------------------------------------------------
-//! \fn void RadIntegrator::UpdateRadiation(int direction)
+//! \fn void RadIntegrator::UpdateRadiation()
 //! \brief update radiation field
-void RadIntegrator::UpdateRadiation(int direction) {}
+void RadIntegrator::UpdateRadiation() {}
 
 #ifdef INCLUDE_CHEMISTRY
-//----------------------------------------------------------------------------------------
-//! \fn void RadIntegrator::GetColMB(int direction)
-//! \brief calcuate total column within the meshblock
-void RadIntegrator::GetColMB(int direction) {}
+void RadIntegrator::GetColMB(BoundaryFace direction) {}
+void RadIntegrator::UpdateCol(BoundaryFace direction) {}
 #endif //INCLUDE_CHEMISTRY

@@ -42,6 +42,7 @@
 #include "outputs/io_wrapper.hpp"
 #include "outputs/outputs.hpp"
 #include "parameter_input.hpp"
+#include "radiation/radiation.hpp"
 #include "task_list/radiation_task_list.hpp"
 #include "utils/utils.hpp"
 
@@ -227,9 +228,10 @@ int main(int argc, char *argv[]) {
     if (res_flag == 1) {
       restartfile.Open(restart_filename, IOWrapper::FileMode::read);
       pinput->LoadFromFile(restartfile);
-      // If both -r and -i are specified, make sure next_time gets corrected.
+      // make sure next_time gets corrected in case -i input file or cmdline args change
+      // the output next_time, dt, etc.
       // This needs to be corrected on the restart file because we need the old dt.
-      if (iarg_flag == 1) pinput->RollbackNextTime();
+      pinput->RollbackNextTime();
       // leave the restart file open for later use
     }
     if (iarg_flag == 1) {
@@ -296,8 +298,9 @@ int main(int argc, char *argv[]) {
 #endif // ENABLE_EXCEPTIONS
 
   // With current mesh time possibly read from restart file, correct next_time for outputs
-  if (iarg_flag == 1 && res_flag == 1) {
-    // if both -r and -i are specified, ensure that next_time  >= mesh_time - dt
+  if (res_flag == 1) {
+    // ensure that next_time  >= mesh_time - dt, in case input file or command line
+    // overrides it
     pinput->ForwardNextTime(pmesh->time);
   }
 
@@ -489,7 +492,23 @@ int main(int argc, char *argv[]) {
 
     //radiation
     if (RADIATION_ENABLED) {
+      clock_t tstart_rad, tstop_rad;
+      tstart_rad = std::clock();
+
       pradlist->DoTaskListOneStage(pmesh, 1);
+
+      //radiation tasklist timing output
+      if (pmesh->my_blocks(0)->prad->output_zone_sec) {
+        tstop_rad = std::clock();
+        double cpu_time = (tstop_rad>tstart_rad ? static_cast<double> (tstop_rad-tstart_rad) :
+            1.0)/static_cast<double> (CLOCKS_PER_SEC);
+        std::uint64_t nzones =
+          static_cast<std::uint64_t> (pmesh->my_blocks(0)->GetNumberOfMeshBlockCells());
+        double zone_sec = static_cast<double> (nzones) / cpu_time;
+        printf("Radiation tasklist: ");
+        printf("ncycle = %d, total time in sec = %.2e, zone/sec=%.2e\n",
+            pmesh->ncycle, cpu_time, Real(nzones)/cpu_time);
+      }
     }
 
     if (STS_ENABLED && pmesh->sts_integrator == "rkl2") {

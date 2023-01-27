@@ -642,49 +642,49 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
         pod->name = "col_Htot_p";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_Htot,4,0,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
         pod = new OutputData;
         pod->type = "VECTORS";
         pod->name = "col_H2_p";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_H2,4,0,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
         pod = new OutputData;
         pod->type = "VECTORS";
         pod->name = "col_CO_p";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_CO,4,0,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
         pod = new OutputData;
         pod->type = "VECTORS";
         pod->name = "col_C_p";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_C,4,0,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
         pod = new OutputData;
         pod->type = "VECTORS";
         pod->name = "col_Htot_m";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_Htot,4,3,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
         pod = new OutputData;
         pod->type = "VECTORS";
         pod->name = "col_H2_m";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_H2,4,3,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
         pod = new OutputData;
         pod->type = "VECTORS";
         pod->name = "col_CO_m";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_CO,4,3,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
         pod = new OutputData;
         pod->type = "VECTORS";
         pod->name = "col_C_m";
         pod->data.InitWithShallowSlice(prad->pradintegrator->col_C,4,3,3);
         AppendOutputDataNode(pod);
-        num_vars_++;
+        num_vars_ += 3;
       }
 #endif //DEBUG
 #endif //INCLUDE_CHEMISTRY
@@ -871,10 +871,13 @@ void OutputType::ClearOutputData() {
 //! \brief scans through singly linked list of OutputTypes and makes any outputs needed.
 
 void Outputs::MakeOutputs(Mesh *pm, ParameterInput *pin, bool wtflag) {
+  // wtflag = only true for making final outputs due to signal or wall-time/cycle/time
+  // limit. Used by restart file output to change suffix to .final
   bool first=true;
   OutputType* ptype = pfirst_type_;
   while (ptype != nullptr) {
-    if ((pm->time == pm->start_time)
+    if (((pm->time == pm->start_time) // output initial conditions, unless next_time set
+         && (ptype->output_params.next_time <= pm->start_time ))
       || (ptype->output_params.dt > 0.0 && pm->time >= ptype->output_params.next_time)
       || (ptype->output_params.dcycle > 0 && pm->ncycle%ptype->output_params.dcycle == 0)
       || (pm->time >= pm->tlim)

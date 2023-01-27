@@ -79,22 +79,9 @@ void EquationOfState::ConservedToPrimitive(
         Real e_k = 0.5*di*(SQR(u_m1) + SQR(u_m2) + SQR(u_m3));
         w_p = gm1*(u_e - e_k - pb);
 
-        // We add our own code in here, Set T_Floor = 10K
-        Real unit_length_in_cm_  = 3.086e18;
-        Real unit_vel_in_cms_    = 1.0e5;
-        Real unit_density_in_nH_ = 1;
-        Real unit_E_in_cgs_ = 1.67e-24 * 1.4 * unit_density_in_nH_* unit_vel_in_cms_ * unit_vel_in_cms_;
-        Real T_floor = 15;
-        Real E_ergs = (u_e - e_k - pb) * unit_E_in_cgs_ / u_d;
-        Real T  =  E_ergs / (1.5*1.381e-16);
-        Real p_floor = (T_floor*(1.5*1.381e-16)*u_d/unit_E_in_cgs_) + e_k + pb;
-        Real e_floor = gm1*(T_floor*(1.5*1.381e-16)*u_d/unit_E_in_cgs_);
-        u_e = (T > T_floor) ?  u_e : e_floor;
-        w_p = (T > T_floor) ?  w_p : p_floor;
-          
         // apply pressure floor, correct total energy
-        // u_e = (w_p > pressure_floor_) ?  u_e : ((pressure_floor_/gm1) + e_k + pb);
-        //w_p = (w_p > pressure_floor_) ?  w_p : pressure_floor_;
+        u_e = (w_p > pressure_floor_) ?  u_e : ((pressure_floor_/gm1) + e_k + pb);
+        w_p = (w_p > pressure_floor_) ?  w_p : pressure_floor_;
       }
     }
   }
