@@ -1,0 +1,91 @@
+<comment>
+problem   = Simulation with Turbulence, H-H2 chem. network 
+reference = 
+configure =  python configure.py --prob=chem_H2_MHD --chemistry=H2_MHD -fft -mpi -hdf5 --nghost=4 --cvode_path=/global/u1/k/kho33/local/cvode/ --nscalars=2 --hdf5_path=/opt/cray/pe/hdf5-parallel/1.12.2.1/gnu/9.1/ --fftw_path=/opt/cray/pe/fftw/3.3.10.2/x86_milan
+
+configure = python configure.py --prob=turb_chem --eos=isothermal -fft -mpi -hdf5 -b 
+
+<job>
+problem_id = UNM         # problem ID: basename of output filenames
+
+<output1>
+file_type  = hst         # History data dump
+dt         = 0.001       # time increment between outputs
+
+<output2>
+file_type  = hdf5        # Binary data dump
+variable   = prim        # variables to be output
+dt         = 1.0         # time increment between outputs
+
+<output3>
+file_type  = rst         # History data dump
+dt         = 100.0       # time increment between outputs
+
+<time>
+cfl_number = 0.3        # The Courant, Friedrichs, & Lewy (CFL) Number
+nlim       = 10000000   # cycle limit
+tlim       = 500.0      # time limit
+integrator  = vl2       # time integration algorithm
+xorder      = 2         # order of spatial reconstruction
+ncycle_out  = 1         # interval for stdout summary info
+
+<mesh>
+nx1        = 256        # Number of zones in X1-direction
+x1min      = -100.0     # minimum value of X1
+x1max      = 100.0      # maximum value of X1 (unit: pc)
+ix1_bc     = periodic   # inner-X1 boundary flag
+ox1_bc     = periodic   # outer-X1 boundary flag
+
+nx2        = 256        # Number of zones in X2-direction
+x2min      = -100.0     # minimum value of X2
+x2max      = 100.0      # maximum value of X2 (unit: pc)
+ix2_bc     = periodic   # inner-X2 boundary flag
+ox2_bc     = periodic   # outer-X2 boundary flag
+
+nx3        = 256        # Number of zones in X3-direction
+x3min      = -100.0     # minimum value of X3
+x3max      = 100.0      # maximum value of X3 (unit: pc)
+ix3_bc     = periodic   # inner-X3 boundary flag
+ox3_bc     = periodic   # outer-X3 boundary flag
+
+<meshblock>
+nx1        = 32
+nx2        = 32
+nx3        = 32
+
+<hydro>
+gamma           = 1.666666666667 # gamma = C_p/C_v
+iso_sound_speed = 3.66           # equavalent to sqrt(gamma*p/d) for p=0.1, d=1 (From examples) (unit: km s^-1)
+
+<problem>
+turb_flag  = 2        # 2  )1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
+b0         = 3.0      # The B-field stregth (Unit 0.183 \mu G)
+angle      = 0.0      # The B-field angle to y-direction
+nH         = 2.0      # The density of each pixel (Unit: mH cm^-3)
+urms       = 0.0      # The rms of velocity
+s_init_H   = 1;       # H+ aboundance per H
+s_init_H2  = 0;       # H+ aboundance per H
+
+<turbulence>
+dedt       = 5e6      # 200 )Energy injection rate (for driven) or Total energy (for decaying)
+nlow       = 0        # cut-off wavenumber at low-k
+nhigh      = 12       # cut-off wavenumber at high-k
+expo       = 2.0      # power-law exponent
+tcorr      = 0.5      # correlation time for OU process (both impulsive and continuous)
+dtdrive    = 0.2      # time interval between perturbation (impulsive)
+rseed      = -1       # if non-negative, seed will be set by hand (slow PS generation)
+
+<chemistry>
+#chemistry solver parameters
+reltol     = 1.0e-6    #relative tolerance, default 1.0e-2
+abstol     = 1.0e-16   #absolute tolerance, default 1.0e-12
+#abstol_H2 = 1.0e-10   #set absolute tolerance to a certain species
+user_jac   = 0         #flag for whether use user provided Jacobian. default false/0
+maxsteps   = 200000    #maximum number of steps in one integration. default 10000
+h_init     = 1e-4      #first step of first zone. Default 0/CVODE algorithm.
+output_zone_sec = 0     #output diagnostic
+#code units
+unit_density_in_nH = 1.
+unit_length_in_cm = 3.086e+18
+unit_vel_in_cms = 1.0e5
+

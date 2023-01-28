@@ -1,4 +1,9 @@
 module load cray-hdf5-parallel/1.12.2.1
 module load cray-fftw/3.3.10.2
+module load libfabric
+module load cray-mpich/8.1.22
 
-srun -N 1 --cpus-per-task 128 /global/u1/k/kho33/Athena/bin/athena -i athinput.superalf
+cd /pscratch/sd/k/kho33/UNM_No_Turb
+
+export LD_LIBRARY_PATH=/global/u1/k/kho33/local/cvode/lib/:$LD_LIBRARY_PATH
+srun  -n 512 -c 1 /global/u1/k/kho33/Athena/bin/athena -i athinput.UNM

@@ -10,7 +10,7 @@ problem_id = superalf  # problem ID: basename of output filenames
 
 <output1>
 file_type  = hst         # History data dump
-dt         = 0.001       # time increment between outputs
+dt         = 0.1         # time increment between outputs
 
 <output2>
 file_type  = hdf5        # Binary data dump
@@ -23,10 +23,10 @@ dt         = 50.0        # time increment between outputs
 
 <time>
 cfl_number = 0.3        # The Courant, Friedrichs, & Lewy (CFL) Number
-nlim       = 10000000   # cycle limit
-tlim       = 500.0      # time limit
+nlim       = 20000      # cycle limit
+tlim       = 100.0      # time limit
 integrator  = vl2       # time integration algorithm
-xorder      = 2         # order of spatial reconstruction
+xorder      = 3         # order of spatial reconstruction
 ncycle_out  = 1         # interval for stdout summary info
 
 <mesh>
@@ -49,8 +49,8 @@ ix3_bc     = periodic   # inner-X3 boundary flag
 ox3_bc     = periodic   # outer-X3 boundary flag
 
 <meshblock>
-nx1        =    64
-nx2        =    64
+nx1        =    32
+nx2        =    32
 nx3        =    32
 
 #hydro block is mendatory
@@ -61,18 +61,19 @@ iso_sound_speed = 0.191919  # isothermal sound speed
 #active   =   fixed          # post-processing
 
 <problem>
-turb_flag  = 3        # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
-beta       = 800      # beta = \sqrt(2*cs*cs*nH/beta)
+turb_flag  = 2        # 1 for decaying, 2 (impulsive) or 3 (continuous) for driven turbulence
+beta       = 300      # beta = \sqrt(2*cs*cs*nH/beta)
 nH         = 1.0      # The density of each pixel (Unit: mH cm^-3)
 
 <turbulence>
-dedt       = 10       # Energy injection rate (for driven) or Total energy (for decaying)
+dedt       = 1        # Energy injection rate (for driven) or Total energy (for decaying)
 nlow       = 0        # cut-off wavenumber at low-k
 nhigh      = 12       # cut-off wavenumber at high-k
 expo       = 2.0      # power-law exponent
 tcorr      = 0.5      # correlation time for OU process (both impulsive and continuous)
-dtdrive    = 0.2      # time interval between perturbation (impulsive)
+dtdrive    = 1.0      # time interval between perturbation (impulsive)
 rseed      = -1       # if non-negative, seed will be set by hand (slow PS generation)
+f_shear    = 1
 
 <radiation>
 G0           = 1

@@ -195,7 +195,7 @@ parser.add_argument('--fftw_path',
 # --chemistry argument
 parser.add_argument('--chemistry',
                     default=None,
-                    choices=["gow17", "H2", "kida"],
+                    choices=["gow17", "H2", "kida", "H2_MHD"],
                     help='select chemical network')
 
 # --kida_rates argument
