@@ -63,7 +63,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 #endif
 }
 
- //EnrollUserTimeStepFunction(CoolingTimeStep);
+ EnrollUserTimeStepFunction(CoolingTimeStep);
 
   return;
 }
@@ -202,7 +202,13 @@ Real CoolingTimeStep(MeshBlock *pmb){
         if (T > 50) {
           dEdt = dEdt - Cooling;
         }
-        Real cool_dt = std::abs(E_ergs/dEdt/unit_time_in_s_);
+        Real cool_dt = 0.0;
+        if (dEdt > 0.0){
+           cool_dt = std::abs(10*E_ergs/dEdt/unit_time_in_s_);
+        }else{
+           cool_dt = std::abs(5*E_ergs/dEdt/unit_time_in_s_);
+        }
+        
         if (min_dt > cool_dt){
           min_dt   = cool_dt;
         }
@@ -239,11 +245,21 @@ void MeshBlock::UserWorkInLoop() {
           Real E_ergs = ED * unit_E_in_cgs_ / nH_;
           Real     T  =  E_ergs / (1.5*1.381e-16);
 
-          Real pfloor = Tfloor* (1.5*1.381e-16) * nH_/unit_E_in_cgs_;
+          Real pfloor = Tfloor* (1.5*1.381e-16) * nH_/unit_E_in_cgs_*(g - 1.0);
           w_p = (T > Tfloor) ?  w_p : pfloor;
           Real di = 1.0/u_d;
           Real ke = 0.5*di*(SQR(u_m1) + SQR(u_m2) + SQR(u_m3));
+
+            
+#if !MAGNETIC_FIELDS_ENABLED  // Hydro:
           u_e = w_p/(g-1.0)+ke;
+#else  // MHD:
+          Real me =0.5*0.25*(SQR(pfield->b.x1f(k,j,i) + pfield->b.x1f(k,j,i+1))
+                          + SQR(pfield->b.x2f(k,j,i)  + pfield->b.x2f(k,j+1,i))
+                          + SQR(pfield->b.x3f(k,j,i) + pfield->b.x3f(k+1,j,i)));
+         u_e = w_p/(g-1.0)+ke+me;
+#endif
+          
       }
     }
   }
